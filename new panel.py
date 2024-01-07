@@ -1,97 +1,104 @@
+bl_info = {
+    "name": "Simple Addon",
+    "blender": (2, 80, 0),
+    "category": "Object",
+}
+
 import bpy
 
-mats = 100
-light_efs = 4
-frame_gap = 1
+# Property to store user input
+class MyProperties(bpy.types.PropertyGroup):
+    text_input: bpy.props.StringProperty(name="Text Input", default="1.0") 
+# Panel class for the UI in the 3D View
+class OBJECT_PT_simple_panel(bpy.types.Panel):
+    bl_label = "Simple Panel"
+    bl_idname = "PT_SimplePanel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Trial panel'
 
-def button_1_function(self, context):
- for i in range(1,mats+1):
-  obj = bpy.data.objects['Drone '+str(i)]    
-  node = obj.active_material.node_tree.nodes['Emission']
- 
- # bpy.context.scene.frame_set(bpy.context.scene.frame_current - 1)
-  node.inputs[0].keyframe_insert(data_path="default_value")
-  bpy.context.scene.frame_set(bpy.context.scene.frame_current + 1)
-     
-  bpy.data.materials["LED color of Drone "+str(i)].node_tree.nodes["Emission"].inputs[0].default_value = (1, 0, 0, 1)
-  obj = bpy.data.objects['Drone '+str(i)]
-  node.inputs[0].keyframe_insert(data_path="default_value")
- 
-  bpy.context.scene.frame_set(bpy.context.scene.frame_current + frame_gap )
- 
-  bpy.data.materials["LED color of Drone "+str(i)].node_tree.nodes["Emission"].inputs[0].default_value = (0, 0, 1, 1)
-  node.inputs[0].keyframe_insert(data_path="default_value")
- 
-  bpy.context.scene.frame_set(bpy.context.scene.frame_current + frame_gap)
- 
-  bpy.data.materials["LED color of Drone "+str(i)].node_tree.nodes["Emission"].inputs[0].default_value = (0, 1, 0, 1)
-  node.inputs[0].keyframe_insert(data_path="default_value")
- 
-  bpy.context.scene.frame_set(bpy.context.scene.frame_current + frame_gap)
- 
-  bpy.data.materials["LED color of Drone "+str(i)].node_tree.nodes["Emission"].inputs[0].default_value = (1, 1, 1, 1)
-  node.inputs[0].keyframe_insert(data_path="default_value")
- 
-  bpy.context.scene.frame_set(bpy.context.scene.frame_current + frame_gap)
- 
-  bpy.data.materials["LED color of Drone "+str(i)].node_tree.nodes["Emission"].inputs[0].default_value = (0, 0, 0, 1)
-  node.inputs[0].keyframe_insert(data_path="default_value")
- 
-  bpy.context.scene.frame_set(bpy.context.scene.frame_current - light_efs * frame_gap)
-
-def button_2_function(self, context):
-    print("Button 2 pressed!")
-
-def button_3_function(self, context):
-    print("Button 3 pressed!")
-
-class MyPanel(bpy.types.Panel):
-    bl_label = "My Panel"
-    bl_idname = "OBJECT_PT_my_panel"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "My Category"
-
+    # Draw function for the UI layout
     def draw(self, context):
         layout = self.layout
-        row = layout.row()
-        row.operator("object.button_1", text="Button 1")
-        row.operator("object.button_2", text="Button 2")
-        row.operator("object.button_3", text="Button 3")
 
-class Button1Operator(bpy.types.Operator):
-    bl_idname = "object.button_1"
-    bl_label = "Button 1"
+        # Add Cube button
+        layout.operator("mesh.add_cube", text="Add Cube")
 
+        # Add Sphere button
+        layout.operator("mesh.add_sphere", text="Add Sphere")
+
+        # Add Path button
+        layout.operator("curve.add_path", text="Add Circular Path")
+        
+        # Row for input field (text input for cube size)
+        row = layout.row()    
+        row.prop(context.scene.my_properties, "text_input", text="")
+
+# Operator class for adding a cube
+class OBJECT_OT_add_cube(bpy.types.Operator):
+    bl_label = "Add Cube"
+    bl_idname = "mesh.add_cube"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    # Execute function for the cube operator
     def execute(self, context):
-        button_1_function(self, context)
+        try:
+            cube_size = float(context.scene.my_properties.text_input)
+        except ValueError:
+            self.report({'ERROR'}, "Invalid input. Please enter a numerical value.")
+            return {'CANCELLED'}
+
+        bpy.ops.mesh.primitive_cube_add(size=cube_size)
         return {'FINISHED'}
 
-class Button2Operator(bpy.types.Operator):
-    bl_idname = "object.button_2"
-    bl_label = "Button 2"
+# Operator class for adding a sphere
+class OBJECT_OT_add_sphere(bpy.types.Operator):
+    bl_label = "Add Sphere"
+    bl_idname = "mesh.add_sphere"
+    bl_options = {'REGISTER', 'UNDO'}
 
+    # Execute function for the sphere operator
     def execute(self, context):
-        button_2_function(self, context)
+        bpy.ops.mesh.primitive_uv_sphere_add(radius=1, location=(0, 0, 0))
         return {'FINISHED'}
 
-class Button3Operator(bpy.types.Operator):
-    bl_idname = "object.button_3"
-    bl_label = "Button 3"
+# Operator class for adding a path curve
+class OBJECT_OT_add_path(bpy.types.Operator):
+    bl_label = "Add Path"
+    bl_idname = "curve.add_path"
+    bl_options = {'REGISTER', 'UNDO'}
 
+    # Execute function for the path operator
     def execute(self, context):
-        button_3_function(self, context)
+        bpy.ops.curve.primitive_bezier_curve_add(enter_editmode=False, align='WORLD', location=(0, 0, 0), scale=(1, 1, 1))
         return {'FINISHED'}
 
-classes = (MyPanel, Button1Operator, Button2Operator, Button3Operator)
+# Function to add the operators to the mesh add menu
+def menu_func(self, context):
+    self.layout.operator(OBJECT_OT_add_cube.bl_idname)
+    self.layout.operator(OBJECT_OT_add_sphere.bl_idname)
+    self.layout.operator(OBJECT_OT_add_path.bl_idname)
 
+# Registration function
 def register():
-    for cls in classes:
-        bpy.utils.register_class(cls)
+    bpy.utils.register_class(MyProperties)
+    bpy.utils.register_class(OBJECT_PT_simple_panel)
+    bpy.utils.register_class(OBJECT_OT_add_cube)
+    bpy.utils.register_class(OBJECT_OT_add_sphere)
+    bpy.utils.register_class(OBJECT_OT_add_path)
+    bpy.types.VIEW3D_MT_mesh_add.append(menu_func)
+    bpy.types.Scene.my_properties = bpy.props.PointerProperty(type=MyProperties)
 
+# Unregistration function
 def unregister():
-    for cls in classes:
-        bpy.utils.unregister_class(cls)
+    bpy.utils.unregister_class(MyProperties)
+    bpy.utils.unregister_class(OBJECT_PT_simple_panel)
+    bpy.utils.unregister_class(OBJECT_OT_add_cube)
+    bpy.utils.unregister_class(OBJECT_OT_add_sphere)
+    bpy.utils.unregister_class(OBJECT_OT_add_path)
+    bpy.types.VIEW3D_MT_mesh_add.remove(menu_func)
+    del bpy.types.Scene.my_properties
 
+# Entry point for the script
 if __name__ == "__main__":
     register()
