@@ -24,6 +24,24 @@ class OBJECT_PT_distance_constraint_panel(bpy.types.Panel):
         layout.prop(my_properties, "drone_count")
         layout.prop(my_properties, "distance_threshold")
         layout.operator("object.apply_distance_constraints", text="Apply Distance Constraints")
+        
+class OBJECT_PT_additional_panel(bpy.types.Panel):
+    bl_label = "Additional Panel"
+    bl_idname = "PT_AdditionalPanel"
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'My New Category'  # Use the same category as the previous panel
+
+    # Draw function for the UI layout
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        my_properties = scene.my_properties
+
+        # Display properties and operator in the UI
+        layout.prop(my_properties, "drone_count")
+        layout.prop(my_properties, "distance_threshold")
+        layout.operator("object.apply_distance_constraints", text="Apply Distance Constraints")        
 
 # Operator class to apply distance constraints
 class OBJECT_OT_apply_distance_constraints(bpy.types.Operator):
@@ -62,6 +80,7 @@ def menu_func(self, context):
 def register():
     bpy.utils.register_class(MyProperties)
     bpy.utils.register_class(OBJECT_PT_distance_constraint_panel)
+    bpy.utils.register_class(OBJECT_PT_additional_panel)
     bpy.utils.register_class(OBJECT_OT_apply_distance_constraints)
     bpy.types.VIEW3D_MT_mesh_add.append(menu_func)
     bpy.types.Scene.my_properties = bpy.props.PointerProperty(type=MyProperties)
@@ -70,6 +89,7 @@ def register():
 def unregister():
     bpy.utils.unregister_class(MyProperties)
     bpy.utils.unregister_class(OBJECT_PT_distance_constraint_panel)
+    bpy.utils.unregister_class(OBJECT_PT_additional_panel)
     bpy.utils.unregister_class(OBJECT_OT_apply_distance_constraints)
     bpy.types.VIEW3D_MT_mesh_add.remove(menu_func)
     del bpy.types.Scene.my_properties
