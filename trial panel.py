@@ -24,9 +24,8 @@ class OBJECT_PT_simple_panel(bpy.types.Panel):
 
         # Row for input field and button
         row = layout.row(align=True)
-        row.operator("object.color_transition", text="Apply Effect")
         row.prop(context.scene.my_properties, "text_input", text="")
-        
+        row.operator("object.color_transition", text="Apply Effect")
 
 # Operator class for adding light effect
 class OBJECT_OT_color_transition(bpy.types.Operator):
@@ -37,7 +36,7 @@ class OBJECT_OT_color_transition(bpy.types.Operator):
     # Execute function for the light effect operator
     def execute(self, context):
         try:
-            frame_size = float(context.scene.my_properties.text_input)
+            frame_size = int(context.scene.my_properties.text_input)
         except ValueError:
             self.report({'ERROR'}, "Invalid input. Please enter a numerical value.")
             return {'CANCELLED'}
@@ -54,11 +53,14 @@ class OBJECT_OT_color_transition(bpy.types.Operator):
                     end_frame = current_frame + frame_size
 
                     # Insert keyframes
-                    node.inputs[0].default_value = (0, 0, 0, 1)
+                    #node.inputs[0].default_value = (0, 0, 0, 1)
                     node.inputs[0].keyframe_insert(data_path="default_value", frame=start_frame)
                     
                     node.inputs[0].default_value = (0, 0, 1, 1)
                     node.inputs[0].keyframe_insert(data_path="default_value", frame=end_frame)
+                    
+                    bpy.context.scene.frame_set(end_frame)
+                    
         
         return {'FINISHED'}
 
